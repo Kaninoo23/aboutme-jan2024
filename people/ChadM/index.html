@@ -1,19 +1,206 @@
 <!DOCTYPE HTML>
 <html>
-    <style>h1 {color:red}</style>
+<head>
+  <style>
+    h1 {
+      color: red;
+    }
+
+    .card {
+      /* Style for card */
+      width: 300px;
+      margin: 10px;
+      display: inline-block;
+    }
+
+    @media screen and (max-width: 600px) {
+      .card {
+        /* layout to stack on small screens */
+        display: block;
+        width: auto;
+      }
+    }
+
+    #slideshow {
+      max-width: 500px;
+      margin: 20px auto;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #slideshow img {
+      width: 100%;
+      display: none;
+    }
+
+    .prev, .next {
+      cursor: pointer;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: auto;
+      padding: 16px;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border: none;
+      border-radius: 5px;
+    }
+
+    .prev {
+      left: 0;
+    }
+
+    .next {
+      right: 0;
+    }
+    body.dark-mode {
+    --background-color: #000000; 
+    --text-color: #ffffff; 
+    background-color: var(--background-color);
+    color: var(--text-color);
+    }
+
+    
+    #dark-mode-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <button id="dark-mode-toggle">Toggle Dark Mode</button>
   <header>
     <h1>About Chad M.</h1>
   </header>
-        <main>
-            <Body>
-             
-            <P>Hi my name is Chad Morrison and I'm married with a 2 year old daughter.
-            </P>
-        <button>Click Me</button>
-        <script>function onButtonClick() {
-            alert('Learn Something New');
-          }
-          
-          const button = document.querySelector('button');
-          button.addEventListener('click', onButtonClick);</script>            
-</HTML>
+  <main>
+    <!-- allow changing background color -->
+    <form id="colorForm">
+      <label for="colorSelect">Choose Background Color:</label>
+      <select id="colorSelect">
+        <option value="white">White</option>
+        <option value="lightblue">Light Blue</option>
+        <option value="lightgreen">Light Green</option>
+        <option value="lightpink">Light Pink</option>
+      </select>
+    </form>
+    <details>
+      <summary>My Favorite Things</summary>
+      <ul>
+        <li class="card">
+          <img src="Setup.jpg" alt="Favorite Thing 1">
+          <h2>Computer Gaming</h2>
+          <p>I like to play computers games of all different genres.</p>
+        </li>
+        <li class="card">
+          <img src="Puzzles.jpg" alt="Favorite Thing 2">
+          <h2>Puzzles</h2>
+          <p>In my spare time I like to do puzzles.</p>
+        </li>
+        <!-- Add more favorite things -->
+      </ul>
+    </details>
+  </main>
+
+  <button id="randomDogButton">Get Random Dog</button>
+  <div id="slideshow"></div>
+  <button class="prev" onclick="plusSlides(-1)">&#10094;</button>
+  <button class="next" onclick="plusSlides(1)">&#10095;</button>
+
+  <script>
+    let slideIndex = 0;
+    let imageUrls = [];
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+  
+    function plusSlides(n) {
+      slideIndex += n;
+      const images = document.querySelectorAll('#slideshow img');
+      if (slideIndex >= imageUrls.length) { slideIndex = 0; }
+      if (slideIndex < 0) { slideIndex = imageUrls.length - 1; }
+      showSlides();
+    }
+  
+    function showSlides() {
+      const images = document.querySelectorAll('#slideshow img');
+      images.forEach((image, index) => {
+        if (index === slideIndex) {
+          image.style.display = 'block';
+        } else {
+          image.style.display = 'none';
+        }
+      });
+    }
+  
+    function getRandomDog() {
+      fetch('https://dog.ceo/api/breeds/image/random')
+        .then(response => response.json())
+        .then(data => {
+          const imageUrl = data.message;
+          imageUrls.unshift(imageUrl);
+          updateSlideshow();
+        })
+        .catch(error => {
+          console.error('Error fetching random dog:', error);
+        });
+    }
+  
+    function updateSlideshow() {
+      const slideshow = document.getElementById('slideshow');
+      slideshow.innerHTML = '';
+      imageUrls.forEach(url => {
+        const image = document.createElement('img');
+        image.src = url;
+        slideshow.appendChild(image);
+      });
+      slideIndex = 0;
+      showSlides(); // Displays the first image in the slideshow
+    }
+  
+    document.addEventListener('DOMContentLoaded', function() {
+      const randomDogButton = document.getElementById('randomDogButton');
+      const prevButton = document.querySelector('.prev');
+      const nextButton = document.querySelector('.next');
+      
+      // Set initial dark mode state
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+      }
+  
+      // Event listeners for navigation buttons
+      prevButton.addEventListener('click', () => plusSlides(-1));
+      nextButton.addEventListener('click', () => plusSlides(1));
+  
+      // Event listener for the button click
+      randomDogButton.addEventListener('click', getRandomDog);
+  
+      // Event listener to the color select dropdown
+      document.getElementById('colorForm').addEventListener('change', function() {
+        var color = document.getElementById('colorSelect').value;
+        document.body.style.backgroundColor = color;
+  
+        // Text color based on background brightness
+        var textColor = getContrastYIQ(color);
+        document.body.style.color = textColor;
+      });
+  
+      // Function to calculate text color based on background brightness
+      function getContrastYIQ(hexcolor){
+        var r = parseInt(hexcolor.substr(0,2),16);
+        var g = parseInt(hexcolor.substr(2,2),16);
+        var b = parseInt(hexcolor.substr(4,2),16);
+        var yiq = ((r*299)+(g*587)+(b*114))/1000;
+        return (yiq >= 128) ? 'black' : 'white';
+      }
+     
+      const darkModeToggle = document.getElementById('dark-mode-toggle');
+      darkModeToggle.addEventListener('click', function() {
+       document.body.classList.toggle('dark-mode');
+       isDarkMode = !isDarkMode;
+       localStorage.setItem('darkMode', isDarkMode);
+      });
+    });
+  </script>
+  
